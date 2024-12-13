@@ -1,0 +1,95 @@
+--- blocks/openai_questions/block_openai_questions.php.orig	2024-12-11 02:26:47.541299446 +0900
++++ blocks/openai_questions/block_openai_questions.php	2024-12-11 02:30:54.372831649 +0900
+@@ -31,7 +31,7 @@
+     }
+ 
+     public function get_content() {
+-        global $PAGE;
++        global $PAGE, $CFG;
+ 
+         $context = context_course::instance($this->page->course->id);
+         if (!has_capability('moodle/course:manageactivities', $context)) {
+@@ -43,7 +43,7 @@
+         }
+ 
+         $this->content         =  new stdClass;
+-        $this->content->text   = '<a href="/blocks/openai_questions/generate.php?id=' . 
++        $this->content->text   = '<a href="' . $CFG->wwwroot . '/blocks/openai_questions/generate.php?id=' . 
+             $this->page->course->id . '"><button class="btn btn-primary">' . 
+             get_string('generatequestions', 'block_openai_questions') . 
+         '</button></a>';
+
+
+--- blocks/openai_questions/generate.php.orig	2024-12-11 02:37:58.595595512 +0900
++++ blocks/openai_questions/generate.php	2024-12-13 21:33:01.971982849 +0900
+@@ -58,7 +58,7 @@
+ } else {
+   $PAGE->navbar->add(
+     get_string("openai_questions", "block_openai_questions"), 
+-    new moodle_url('/blocks/openai_questions/generate.php', ['id' => $course->id])
++    new moodle_url($CFG->wwwroot . '/blocks/openai_questions/generate.php', ['id' => $course->id])
+   );
+   $PAGE->navbar->add(get_string("editquestions", "block_openai_questions", $url));
+ }
+@@ -122,10 +122,10 @@
+   }
+ 
+   $output .= html_writer::tag('input', '', ['type' => 'submit', 'value' => get_string('addtoqbank', 'block_openai_questions'), 'class' => 'btn btn-primary block_openai_questions-addToQBank', 'id' => 'addToQBank']);
+-  $output .= html_writer::tag('a', '<input type="submit" class="btn btn-secondary" value="' . get_string('cancel', 'block_openai_questions') . '"/>', ['href' => "/course/view.php?id=$fromform->courseid"]);
++  $output .= html_writer::tag('a', '<input type="submit" class="btn btn-secondary" value="' . get_string('cancel', 'block_openai_questions') . '"/>', ['href' => $CFG->wwwroot . "/course/view.php?id=$fromform->courseid"]);
+ 
+   echo $output;
+-  $PAGE->requires->js_init_call('init', [$_SESSION['openai_questions_course']]);
++  $PAGE->requires->js_init_call('init', [$_SESSION['openai_questions_course'], $CFG->wwwroot]);
+ 
+ } else {
+
+
+--- blocks/openai_questions/lib.js.orig	2024-12-13 21:35:27.940670052 +0900
++++ blocks/openai_questions/lib.js	2024-12-13 21:10:25.753482200 +0900
+@@ -1,4 +1,4 @@
+-const init = (Y, courseid) => {
++const init = (Y, courseid, wwwroot) => {
+     document.querySelectorAll('.block_openai_questions-question .block_openai_questions-delete').forEach(button => {
+         button.addEventListener('click', e => {
+             removeQuestion(e.target.closest('.block_openai_questions-question'))
+@@ -11,7 +11,7 @@
+         e.target.style.pointerEvents = 'none'
+         
+         const questions = buildQuestionObj()
+-        await fetch('/blocks/openai_questions/api/question.php', {
++        await fetch(`${wwwroot}/blocks/openai_questions/api/question.php`, {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json'
+@@ -19,7 +19,7 @@
+             body: JSON.stringify(questions)
+         })
+ 
+-        window.location.href = `/question/edit.php?courseid=${courseid}`
++        window.location.href = `${wwwroot}/question/edit.php?courseid=${courseid}`
+     })
+ 
+     document.querySelectorAll('.block_openai_questions-markCorrectButton').forEach(button => {
+
+--- blocks/openai_questions/settings.php.orig	2024-12-13 23:14:03.317269985 +0900
++++ blocks/openai_questions/settings.php	2024-12-13 23:14:16.691145098 +0900
+@@ -35,7 +35,7 @@
+     'block_openai_questions/model',
+     get_string('model', 'block_openai_questions'),
+     get_string('modellabel', 'block_openai_questions'),
+-    'gpt-3.5-turbo-1106',
++    'gpt-4o-mini',
+     [
+         'gpt-4' => 'gpt-4',
+         'gpt-4-1106-preview' => 'gpt-4-1106-preview',
+@@ -46,5 +46,7 @@
+         'gpt-3.5-turbo-1106' => 'gpt-3.5-turbo-1106',
+         'gpt-3.5-turbo-0613' => 'gpt-3.5-turbo-0613',
+         'gpt-3.5-turbo-16k-0613' => 'gpt-3.5-turbo-16k-0613',
+-    ]
++        'gpt-4o-mini' => 'gpt-4o-mini',
++        'gpt-4o' => 'gpt-4o',
++]
+ ));
+
